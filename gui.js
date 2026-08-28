@@ -71,11 +71,74 @@
     });
   }
 
+  // Only the first entry is a real link; the rest are decorative flavor
+  // text (no fabricated URLs) until there are more real ones to add.
+  const SEARCH_HISTORY = [
+    {
+      title: "Moment Napięcia — ZPAF Poznań",
+      url: "www.zpafpoznan.pl/momentnapiecie",
+      href: "https://www.zpafpoznan.pl/momentnapiecie",
+    },
+    { title: "best homelab setups 2026", url: "search history" },
+    { title: "k3s two-node cluster tutorial", url: "search history" },
+  ];
+
+  function renderBrowser(container) {
+    const bar = document.createElement("div");
+    bar.className = "browser-searchbar";
+    const icon = document.createElement("span");
+    icon.className = "browser-search-icon";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.readOnly = true;
+    input.value = "moment napięcia zpaf poznań";
+    bar.appendChild(icon);
+    bar.appendChild(input);
+
+    const label = document.createElement("div");
+    label.className = "browser-history-label";
+    label.textContent = "Recent searches";
+
+    const list = document.createElement("div");
+    list.className = "browser-history-list";
+
+    SEARCH_HISTORY.forEach((h) => {
+      const row = document.createElement(h.href ? "a" : "div");
+      row.className = "browser-history-item";
+      if (h.href) {
+        row.href = h.href;
+        row.target = "_blank";
+        row.rel = "noopener noreferrer";
+      }
+      const dot = document.createElement("span");
+      dot.className = "history-icon";
+      const text = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "history-title";
+      title.textContent = h.title;
+      const url = document.createElement("div");
+      url.className = "history-url";
+      url.textContent = h.url;
+      text.appendChild(title);
+      text.appendChild(url);
+      row.appendChild(dot);
+      row.appendChild(text);
+      list.appendChild(row);
+    });
+
+    container.appendChild(bar);
+    container.appendChild(label);
+    container.appendChild(list);
+  }
+
   const APPS = [
-    { id: "about", title: "About Me", glyph: "i", render: renderAbout },
-    { id: "projects", title: "Projects", glyph: "#", render: renderProjects },
-    { id: "contact", title: "Contact", glyph: "@", render: renderContact },
-    { id: "terminal", title: "Terminal", glyph: ">_", returnToCli: true },
+    { id: "about", title: "About Me", iconClass: "icon-about", render: renderAbout },
+    { id: "projects", title: "Projects", iconClass: "icon-projects", render: renderProjects },
+    { id: "contact", title: "Contact", iconClass: "icon-contact", render: renderContact, width: "min(460px, 92vw)" },
+    // "Internet" (globe icon, renderBrowser) removed from the desktop for
+    // now — renderBrowser/SEARCH_HISTORY above are kept so it's a one-line
+    // re-add: { id: "browser", title: "Internet", iconClass: "icon-globe", render: renderBrowser, width: "min(480px, 92vw)" },
+    { id: "terminal", title: "Terminal", iconClass: "icon-terminal", glyph: ">_", returnToCli: true },
   ];
 
   const $installer = document.getElementById("gui-installer");
@@ -126,20 +189,35 @@
   function buildWindow(app) {
     const el = document.createElement("div");
     el.className = "gui-window";
-    const offset = 24 * (openWindows.size % 6);
-    el.style.left = 40 + offset + "px";
-    el.style.top = 30 + offset + "px";
-    if (isMobile()) el.classList.add("maximized");
+    if (isMobile()) {
+      // full-screen on small viewports — inline left/top/width below would
+      // otherwise override the "maximized" class's positioning, since
+      // inline styles always beat an external stylesheet rule
+      el.classList.add("maximized");
+    } else {
+      const offset = 24 * (openWindows.size % 6);
+      el.style.left = `${40 + offset}px`;
+      el.style.top = `${30 + offset}px`;
+      if (app.width) el.style.width = app.width;
+    }
 
     const titlebar = document.createElement("div");
     titlebar.className = "gui-titlebar";
 
     const closeBtn = document.createElement("button");
-    closeBtn.className = "gui-win-btn";
+    closeBtn.className = "gui-win-btn gui-win-close";
     closeBtn.setAttribute("aria-label", "close");
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       closeApp(app.id);
+    });
+
+    const minimizeBtn = document.createElement("button");
+    minimizeBtn.className = "gui-win-btn gui-win-minimize";
+    minimizeBtn.setAttribute("aria-label", "minimize");
+    minimizeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      minimizeOrRestore(app.id);
     });
 
     const titleText = document.createElement("span");
@@ -147,6 +225,7 @@
     titleText.textContent = app.title;
 
     titlebar.appendChild(closeBtn);
+    titlebar.appendChild(minimizeBtn);
     titlebar.appendChild(titleText);
 
     const content = document.createElement("div");
@@ -168,7 +247,9 @@
     let offsetY = 0;
 
     handle.addEventListener("pointerdown", (e) => {
-      if (isMobile()) return;
+      // don't hijack clicks on the close/minimize buttons — capturing the
+      // pointer here would reroute their click event away from them
+      if (isMobile() || e.target.closest(".gui-win-btn")) return;
       dragging = true;
       offsetX = e.clientX - el.offsetLeft;
       offsetY = e.clientY - el.offsetTop;
@@ -231,11 +312,19 @@
     $menuButton.classList.toggle("open", willOpen);
   }
 
+  const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
   function updateClock() {
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
+    const weekday = WEEKDAYS[now.getDay()];
+    const month = MONTHS[now.getMonth()];
+    const day = now.getDate();
+    let hours = now.getHours();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
     const mm = String(now.getMinutes()).padStart(2, "0");
-    $clock.textContent = `${hh}:${mm}`;
+    $clock.textContent = `${weekday} ${month} ${day}  ${hours}:${mm} ${ampm}`;
   }
 
   function buildDesktop() {
@@ -244,6 +333,7 @@
     $topbarTitle = document.createElement("span");
     $topbarTitle.textContent = "Desktop";
     $clock = document.createElement("span");
+    $clock.className = "gui-clock";
     topbar.appendChild($topbarTitle);
     topbar.appendChild($clock);
 
@@ -256,8 +346,13 @@
       const btn = document.createElement("button");
       btn.className = "gui-icon";
       const glyph = document.createElement("div");
-      glyph.className = "gui-icon-glyph";
-      glyph.textContent = app.glyph;
+      glyph.className = `gui-icon-glyph ${app.iconClass}`;
+      if (app.glyph) {
+        const glyphText = document.createElement("span");
+        glyphText.className = "gui-icon-glyph-text";
+        glyphText.textContent = app.glyph;
+        glyph.appendChild(glyphText);
+      }
       const label = document.createElement("div");
       label.className = "gui-icon-label";
       label.textContent = app.title;
@@ -320,7 +415,8 @@
   function showDesktop() {
     if (!desktopBuilt) buildDesktop();
     $desktop.hidden = false;
-    openApp(APPS[0]);
+    // no auto-opened window — one used to cover the desktop icons
+    // underneath it, making About/Projects/Contact seem unclickable
   }
 
   window.launchGuiInstaller = function launchGuiInstaller() {
