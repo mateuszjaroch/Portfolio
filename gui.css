@@ -1,0 +1,398 @@
+/* Retro desktop: window chrome/taskbar borrow the Win98 3D-bevel look,
+   the top menu bar/clock and left-side window controls borrow the
+   macOS 9 "Platinum" look. Purely a visual homage — no real logos,
+   wordmarks, or system names are used anywhere. */
+
+:root {
+  --gui-face: #c0c0c0;
+  --gui-face-dark: #808080;
+  --gui-topbar-h: 22px;
+  --gui-taskbar-h: 34px;
+}
+
+#gui-installer,
+#gui-desktop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  font-family: "Tahoma", "Segoe UI", Geneva, Verdana, sans-serif;
+}
+
+/* an author rule setting `display` always beats the UA [hidden] rule,
+   regardless of specificity — without this, both panels would render
+   (and cover the terminal) even while hidden */
+#gui-installer[hidden],
+#gui-desktop[hidden] {
+  display: none;
+}
+
+/* ---------- installer ---------- */
+
+#gui-installer {
+  background: #000080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.installer-box {
+  width: min(90vw, 480px);
+  background: var(--gui-face);
+  padding: 20px;
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff,
+    inset -2px -2px 0 var(--gui-face-dark),
+    inset 2px 2px 0 #dfdfdf;
+}
+
+.installer-title {
+  font-size: 14px;
+  margin-bottom: 14px;
+  color: #000;
+}
+
+.installer-progress-track {
+  height: 20px;
+  background: #fff;
+  box-shadow:
+    inset -1px -1px 0 #fff,
+    inset 1px 1px 0 #000,
+    inset -2px -2px 0 #dfdfdf,
+    inset 2px 2px 0 var(--gui-face-dark);
+  padding: 2px;
+  margin-bottom: 10px;
+}
+
+.installer-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: repeating-linear-gradient(90deg, #000080 0 8px, #1084d0 8px 16px);
+}
+
+.installer-log {
+  height: 90px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #000;
+  color: #39ff6a;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  padding: 6px 8px;
+  box-shadow:
+    inset -1px -1px 0 #fff,
+    inset 1px 1px 0 #000;
+}
+
+.installer-log div {
+  white-space: nowrap;
+}
+
+/* ---------- desktop shell ---------- */
+
+#gui-desktop {
+  display: flex;
+  flex-direction: column;
+  background: #008080;
+}
+
+.gui-topbar {
+  height: var(--gui-topbar-h);
+  flex-shrink: 0;
+  background: linear-gradient(#ffffff, #d8d8d8);
+  border-bottom: 1px solid #808080;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #000;
+}
+
+.gui-body {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.gui-icons {
+  position: absolute;
+  inset: 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px;
+}
+
+.gui-icon {
+  width: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+
+.gui-icon:focus-visible,
+.gui-icon:active {
+  outline: 1px dotted #fff;
+}
+
+.gui-icon-glyph {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  background: var(--gui-face);
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff,
+    inset -2px -2px 0 var(--gui-face-dark),
+    inset 2px 2px 0 #dfdfdf;
+}
+
+.gui-icon-label {
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  text-shadow: 1px 1px 1px #000;
+  line-height: 1.2;
+}
+
+.gui-windows {
+  position: absolute;
+  inset: 0;
+}
+
+.gui-window {
+  position: absolute;
+  width: min(360px, 84vw);
+  min-height: 180px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gui-face);
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff,
+    inset -2px -2px 0 var(--gui-face-dark),
+    inset 2px 2px 0 #dfdfdf;
+  padding: 2px;
+}
+
+.gui-titlebar {
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  background: linear-gradient(90deg, #808080, #b5b5b5);
+  color: #e0e0e0;
+  font-size: 13px;
+  font-weight: bold;
+  touch-action: none;
+  user-select: none;
+}
+
+.gui-titlebar.active {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+}
+
+.gui-titlebar-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gui-win-btn {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  padding: 0;
+  background: var(--gui-face);
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff;
+  cursor: pointer;
+}
+
+.gui-win-btn::after {
+  content: "";
+  display: block;
+  width: 7px;
+  height: 7px;
+  margin: 3px auto 0;
+  border: 1px solid #000;
+}
+
+.gui-win-btn:active {
+  box-shadow:
+    inset 1px 1px 0 #000,
+    inset -1px -1px 0 #fff;
+}
+
+.gui-window-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 12px;
+  background: #fff;
+  color: #111;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gui-window-content p {
+  margin: 0 0 10px 0;
+}
+
+.gui-list-row {
+  padding: 8px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.gui-list-row:last-child {
+  border-bottom: none;
+}
+
+.gui-list-toprow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: bold;
+}
+
+.gui-list-status {
+  font-weight: normal;
+  color: #555;
+  white-space: nowrap;
+}
+
+.gui-list-desc {
+  color: #333;
+  margin-top: 2px;
+}
+
+.gui-contact-row {
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+.gui-contact-row a {
+  color: #000080;
+}
+
+/* ---------- taskbar ---------- */
+
+.gui-taskbar {
+  height: var(--gui-taskbar-h);
+  flex-shrink: 0;
+  background: var(--gui-face);
+  box-shadow: inset 0 1px 0 #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  position: relative;
+}
+
+.gui-menu-button {
+  height: calc(var(--gui-taskbar-h) - 10px);
+  padding: 0 12px;
+  background: var(--gui-face);
+  font-weight: bold;
+  font-size: 13px;
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff;
+  cursor: pointer;
+}
+
+.gui-menu-button:active,
+.gui-menu-button.open {
+  box-shadow:
+    inset 1px 1px 0 #000,
+    inset -1px -1px 0 #fff;
+}
+
+.gui-menu-popup {
+  position: absolute;
+  left: 4px;
+  bottom: calc(var(--gui-taskbar-h) + 2px);
+  background: var(--gui-face);
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff;
+  min-width: 160px;
+  padding: 2px;
+}
+
+.gui-menu-popup button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.gui-menu-popup button:hover {
+  background: #000080;
+  color: #fff;
+}
+
+.gui-taskbar-windows {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  flex: 1 1 auto;
+}
+
+.gui-taskbar-btn {
+  height: calc(var(--gui-taskbar-h) - 10px);
+  padding: 0 10px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--gui-face);
+  font-size: 12px;
+  box-shadow:
+    inset -1px -1px 0 #000,
+    inset 1px 1px 0 #fff;
+  cursor: pointer;
+}
+
+.gui-taskbar-btn.active {
+  box-shadow:
+    inset 1px 1px 0 #000,
+    inset -1px -1px 0 #fff;
+}
+
+/* on small screens, windows always fill the desktop body — dragging a
+   floating box is a poor fit for touch, so we skip it entirely there */
+@media (max-width: 700px) {
+  .gui-window.maximized {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    max-height: none;
+  }
+
+  .gui-icons {
+    padding: 8px;
+  }
+}

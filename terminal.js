@@ -95,6 +95,7 @@ const commands = {
         "  ls, projects       list projects in progress",
         "  contact            how to reach me",
         "  locate <ip>        geolocate an IPv4 address",
+        "  apt install gui    for recruiters who'd rather click than type",
         "  clear              clear the screen",
       ]);
     },
@@ -172,6 +173,22 @@ const commands = {
     },
   },
 
+  apt: {
+    description: "package manager",
+    async run(args) {
+      const [sub, pkg] = args;
+      if (sub !== "install") {
+        printLine("usage: apt install <package>", "error");
+        return;
+      }
+      if (pkg !== "gui") {
+        printLine(`E: Unable to locate package ${pkg || ""}`.trim(), "error");
+        return;
+      }
+      await installGui();
+    },
+  },
+
   locate: {
     description: "geolocate an IPv4 address",
     async run(args) {
@@ -225,6 +242,35 @@ const commands = {
 commands.man = commands.help;
 commands.about = commands.whoami;
 commands.projects = commands.ls;
+commands["apt-get"] = commands.apt;
+
+async function installGui() {
+  printLines(["Reading package lists... Done", "Building dependency tree... Done", "Reading state information... Done"], "dim");
+  await delay(300);
+  printLines([
+    "The following NEW packages will be installed:",
+    "  gui-desktop retro-wm platinum-icons win9x-widgets",
+    "0 upgraded, 4 newly installed, 0 to remove.",
+    "Need to get 4,096 kB of archives.",
+  ]);
+  await delay(300);
+  printLines(
+    [
+      "Get:1 http://archive.promatheus/pool gui-desktop [1,024 kB]",
+      "Get:2 http://archive.promatheus/pool retro-wm [980 kB]",
+      "Get:3 http://archive.promatheus/pool platinum-icons [512 kB]",
+      "Get:4 http://archive.promatheus/pool win9x-widgets [1,580 kB]",
+      "Fetched 4,096 kB in 1s",
+    ],
+    "dim"
+  );
+  await delay(300);
+  printLine("Setting up gui-desktop...", "dim");
+  await delay(300);
+  if (typeof window.launchGuiInstaller === "function") {
+    await window.launchGuiInstaller();
+  }
+}
 
 async function handleCommand(raw) {
   const trimmed = raw.trim();
@@ -336,5 +382,9 @@ async function startTerminal() {
   }
   createActiveLine().focus();
 }
+
+window.focusTerminalInput = () => {
+  if (activeInput) activeInput.focus();
+};
 
 startTerminal();
