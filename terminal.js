@@ -3,8 +3,6 @@
 const PROMPT = "root@promatheus:~$";
 const LOCATE_ENDPOINT = "https://ipwho.is/";
 
-// "#" = front face, "/" = a bevelled bottom/right edge trailing off the
-// silhouette (not every stroke) — reads as a flat 3D block, not clutter.
 const ASCII_BANNER_LINES = [
   "     ##   ###   ######   #####   #####  ##   ##  ",
   "     ##  ## ##  ##   ## ##   ## ##   ## ##   ##/ ",
@@ -49,8 +47,6 @@ function scrollToBottom() {
   $output.scrollTop = $output.scrollHeight;
 }
 
-// All dynamic/user-derived content goes through textContent, never innerHTML,
-// so a typed command (e.g. an IP argument) can never be interpreted as markup.
 function printLine(text, className) {
   const div = document.createElement("div");
   div.className = className ? `line ${className}` : "line";

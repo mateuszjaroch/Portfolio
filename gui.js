@@ -18,9 +18,9 @@
   ];
 
   const CONTACT_LINKS = [
-    { label: "GitHub", href: "https://github.com/mateuszjaroch" },
-    { label: "LinkedIn", href: "https://pl.linkedin.com/in/mateusz-jaroch-2ba500353" },
-    { label: "Email", href: "mailto:mateusz.jaroch21@gmail.com" },
+    { label: "GitHub", href: "https://github.com/mateuszjaroch", display: "github.com/mateuszjaroch" },
+    { label: "LinkedIn", href: "https://pl.linkedin.com/in/mateusz-jaroch-2ba500353", display: "linkedin.com/in/mateuszjaroch" },
+    { label: "Email", href: "mailto:mateusz.jaroch21@gmail.com", display: "mateusz.jaroch21@gmail.com" },
   ];
 
   function renderAbout(container) {
@@ -63,7 +63,7 @@
       row.appendChild(document.createTextNode(`${l.label}: `));
       const a = document.createElement("a");
       a.href = l.href;
-      a.textContent = l.href;
+      a.textContent = l.display;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       row.appendChild(a);
@@ -71,8 +71,6 @@
     });
   }
 
-  // Only the first entry is a real link; the rest are decorative flavor
-  // text (no fabricated URLs) until there are more real ones to add.
   const SEARCH_HISTORY = [
     {
       title: "Moment Napięcia — ZPAF Poznań",
@@ -132,12 +130,9 @@
   }
 
   const APPS = [
-    { id: "about", title: "About Me", iconClass: "icon-about", render: renderAbout },
-    { id: "projects", title: "Projects", iconClass: "icon-projects", render: renderProjects },
-    { id: "contact", title: "Contact", iconClass: "icon-contact", render: renderContact, width: "min(460px, 92vw)" },
-    // "Internet" (globe icon, renderBrowser) removed from the desktop for
-    // now — renderBrowser/SEARCH_HISTORY above are kept so it's a one-line
-    // re-add: { id: "browser", title: "Internet", iconClass: "icon-globe", render: renderBrowser, width: "min(480px, 92vw)" },
+    { id: "about", title: "About Me", icon: "aboutme.png", render: renderAbout },
+    { id: "projects", title: "Projects", icon: "projects.png", render: renderProjects },
+    { id: "contact", title: "Contact", icon: "contact.png", render: renderContact },
     { id: "terminal", title: "Terminal", iconClass: "icon-terminal", glyph: ">_", returnToCli: true },
   ];
 
@@ -145,16 +140,12 @@
   const $desktop = document.getElementById("gui-desktop");
 
   let desktopBuilt = false;
-  let $topbarTitle = null;
-  let $clock = null;
   let $icons = null;
   let $windows = null;
-  let $taskbarWindows = null;
-  let $menuPopup = null;
-  let $menuButton = null;
 
-  const openWindows = new Map(); // id -> { el, titlebar, title, minimized }
-  let zCounter = 10;
+  let $panel = null;
+  let $panelTitle = null;
+  let $panelContent = null;
 
   function isMobile() {
     return window.innerWidth < 700;
@@ -171,35 +162,23 @@
       returnToTerminal();
       return;
     }
-    if (openWindows.has(app.id)) {
-      const w = openWindows.get(app.id);
-      w.minimized = false;
-      w.el.hidden = false;
-      focusWindow(app.id);
-      updateTaskbar();
-      return;
-    }
-    const record = buildWindow(app);
-    $windows.appendChild(record.el);
-    openWindows.set(app.id, record);
-    focusWindow(app.id);
-    updateTaskbar();
+    showPanel(app);
   }
 
-  function buildWindow(app) {
-    const el = document.createElement("div");
-    el.className = "gui-window";
-    if (isMobile()) {
-      // full-screen on small viewports — inline left/top/width below would
-      // otherwise override the "maximized" class's positioning, since
-      // inline styles always beat an external stylesheet rule
-      el.classList.add("maximized");
-    } else {
-      const offset = 24 * (openWindows.size % 6);
-      el.style.left = `${40 + offset}px`;
-      el.style.top = `${30 + offset}px`;
-      if (app.width) el.style.width = app.width;
+  function buildStripes() {
+    const stripes = document.createElement("div");
+    stripes.className = "gui-titlebar-stripes";
+    for (let i = 0; i < 6; i++) {
+      const stripe = document.createElement("div");
+      stripe.className = "gui-titlebar-stripe";
+      stripes.appendChild(stripe);
     }
+    return stripes;
+  }
+
+  function buildPanel() {
+    const el = document.createElement("div");
+    el.className = "gui-window gui-panel";
 
     const titlebar = document.createElement("div");
     titlebar.className = "gui-titlebar";
@@ -209,7 +188,7 @@
     closeBtn.setAttribute("aria-label", "close");
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      closeApp(app.id);
+      el.hidden = true;
     });
 
     const minimizeBtn = document.createElement("button");
@@ -217,28 +196,61 @@
     minimizeBtn.setAttribute("aria-label", "minimize");
     minimizeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      minimizeOrRestore(app.id);
+      el.classList.toggle("collapsed");
     });
 
-    const titleText = document.createElement("span");
-    titleText.className = "gui-titlebar-text";
-    titleText.textContent = app.title;
+    const closeHole = document.createElement("div");
+    closeHole.className = "gui-win-hole";
+    closeHole.appendChild(closeBtn);
 
-    titlebar.appendChild(closeBtn);
-    titlebar.appendChild(minimizeBtn);
-    titlebar.appendChild(titleText);
+    const minimizeHole = document.createElement("div");
+    minimizeHole.className = "gui-win-hole";
+    minimizeHole.appendChild(minimizeBtn);
 
-    const content = document.createElement("div");
-    content.className = "gui-window-content";
-    app.render(content);
+    $panelTitle = document.createElement("span");
+    $panelTitle.className = "gui-titlebar-text";
+
+    titlebar.appendChild(closeHole);
+    titlebar.appendChild(buildStripes());
+    titlebar.appendChild($panelTitle);
+    titlebar.appendChild(buildStripes());
+    titlebar.appendChild(minimizeHole);
+
+    $panelContent = document.createElement("div");
+    $panelContent.className = "gui-window-content";
 
     el.appendChild(titlebar);
-    el.appendChild(content);
+    el.appendChild($panelContent);
 
-    el.addEventListener("pointerdown", () => focusWindow(app.id));
     makeDraggable(el, titlebar);
 
-    return { el, titlebar, title: app.title, minimized: false };
+    return el;
+  }
+
+  function centerPanel(el) {
+    const rect = el.getBoundingClientRect();
+    el.style.left = `${Math.max(0, (window.innerWidth - rect.width) / 2)}px`;
+    el.style.top = `${Math.max(0, (window.innerHeight - rect.height) / 2)}px`;
+  }
+
+  function showPanel(app) {
+    if (!$panel) {
+      $panel = buildPanel();
+      $windows.appendChild($panel);
+    }
+
+    $panelTitle.textContent = app.title;
+    while ($panelContent.firstChild) $panelContent.removeChild($panelContent.firstChild);
+    app.render($panelContent);
+
+    $panel.hidden = false;
+    $panel.classList.remove("collapsed");
+    if (isMobile()) {
+      $panel.classList.add("maximized");
+    } else {
+      $panel.classList.remove("maximized");
+      centerPanel($panel);
+    }
   }
 
   function makeDraggable(el, handle) {
@@ -247,8 +259,6 @@
     let offsetY = 0;
 
     handle.addEventListener("pointerdown", (e) => {
-      // don't hijack clicks on the close/minimize buttons — capturing the
-      // pointer here would reroute their click event away from them
       if (isMobile() || e.target.closest(".gui-win-btn")) return;
       dragging = true;
       offsetX = e.clientX - el.offsetLeft;
@@ -267,76 +277,7 @@
     handle.addEventListener("pointercancel", stop);
   }
 
-  function focusWindow(id) {
-    const w = openWindows.get(id);
-    if (!w) return;
-    zCounter += 1;
-    w.el.style.zIndex = String(zCounter);
-    openWindows.forEach((other) => other.titlebar.classList.remove("active"));
-    w.titlebar.classList.add("active");
-    $topbarTitle.textContent = w.title;
-  }
-
-  function closeApp(id) {
-    const w = openWindows.get(id);
-    if (!w) return;
-    w.el.remove();
-    openWindows.delete(id);
-    if ($topbarTitle.textContent === w.title) $topbarTitle.textContent = "Desktop";
-    updateTaskbar();
-  }
-
-  function minimizeOrRestore(id) {
-    const w = openWindows.get(id);
-    if (!w) return;
-    w.minimized = !w.minimized;
-    w.el.hidden = w.minimized;
-    if (!w.minimized) focusWindow(id);
-    updateTaskbar();
-  }
-
-  function updateTaskbar() {
-    while ($taskbarWindows.firstChild) $taskbarWindows.removeChild($taskbarWindows.firstChild);
-    openWindows.forEach((w, id) => {
-      const btn = document.createElement("button");
-      btn.className = "gui-taskbar-btn" + (w.minimized ? "" : " active");
-      btn.textContent = w.title;
-      btn.addEventListener("click", () => minimizeOrRestore(id));
-      $taskbarWindows.appendChild(btn);
-    });
-  }
-
-  function toggleMenu(forceClose) {
-    const willOpen = forceClose ? false : $menuPopup.hidden;
-    $menuPopup.hidden = !willOpen;
-    $menuButton.classList.toggle("open", willOpen);
-  }
-
-  const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  function updateClock() {
-    const now = new Date();
-    const weekday = WEEKDAYS[now.getDay()];
-    const month = MONTHS[now.getMonth()];
-    const day = now.getDate();
-    let hours = now.getHours();
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    $clock.textContent = `${weekday} ${month} ${day}  ${hours}:${mm} ${ampm}`;
-  }
-
   function buildDesktop() {
-    const topbar = document.createElement("div");
-    topbar.className = "gui-topbar";
-    $topbarTitle = document.createElement("span");
-    $topbarTitle.textContent = "Desktop";
-    $clock = document.createElement("span");
-    $clock.className = "gui-clock";
-    topbar.appendChild($topbarTitle);
-    topbar.appendChild($clock);
-
     const body = document.createElement("div");
     body.className = "gui-body";
 
@@ -346,8 +287,15 @@
       const btn = document.createElement("button");
       btn.className = "gui-icon";
       const glyph = document.createElement("div");
-      glyph.className = `gui-icon-glyph ${app.iconClass}`;
-      if (app.glyph) {
+      glyph.className = "gui-icon-glyph" + (app.iconClass ? ` ${app.iconClass}` : "");
+      if (app.icon) {
+        const img = document.createElement("img");
+        img.className = "gui-icon-img";
+        img.src = app.icon;
+        img.alt = "";
+        img.draggable = false;
+        glyph.appendChild(img);
+      } else if (app.glyph) {
         const glyphText = document.createElement("span");
         glyphText.className = "gui-icon-glyph-text";
         glyphText.textContent = app.glyph;
@@ -368,46 +316,7 @@
     body.appendChild($icons);
     body.appendChild($windows);
 
-    const taskbar = document.createElement("div");
-    taskbar.className = "gui-taskbar";
-
-    $menuButton = document.createElement("button");
-    $menuButton.className = "gui-menu-button";
-    $menuButton.textContent = "Menu";
-    $menuButton.addEventListener("click", () => toggleMenu());
-
-    $menuPopup = document.createElement("div");
-    $menuPopup.className = "gui-menu-popup";
-    $menuPopup.hidden = true;
-    APPS.forEach((app) => {
-      const item = document.createElement("button");
-      item.textContent = app.returnToCli ? "Return to Terminal" : app.title;
-      item.addEventListener("click", () => {
-        toggleMenu(true);
-        openApp(app);
-      });
-      $menuPopup.appendChild(item);
-    });
-
-    $taskbarWindows = document.createElement("div");
-    $taskbarWindows.className = "gui-taskbar-windows";
-
-    taskbar.appendChild($menuButton);
-    taskbar.appendChild($menuPopup);
-    taskbar.appendChild($taskbarWindows);
-
-    document.addEventListener("pointerdown", (e) => {
-      if (!$menuPopup.hidden && !$menuPopup.contains(e.target) && e.target !== $menuButton) {
-        toggleMenu(true);
-      }
-    });
-
-    $desktop.appendChild(topbar);
     $desktop.appendChild(body);
-    $desktop.appendChild(taskbar);
-
-    updateClock();
-    setInterval(updateClock, 15000);
 
     desktopBuilt = true;
   }
@@ -415,8 +324,6 @@
   function showDesktop() {
     if (!desktopBuilt) buildDesktop();
     $desktop.hidden = false;
-    // no auto-opened window — one used to cover the desktop icons
-    // underneath it, making About/Projects/Contact seem unclickable
   }
 
   window.launchGuiInstaller = function launchGuiInstaller() {

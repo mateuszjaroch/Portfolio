@@ -96,7 +96,7 @@ body {
   font: inherit;
   caret-color: var(--fg);
   text-shadow: 0 0 4px rgba(57, 255, 106, 0.55);
-  font-size: max(16px, var(--font-size)); /* prevent iOS auto-zoom on focus */
+  font-size: max(16px, var(--font-size));
   width: min(100%, 60ch);
 }
 
