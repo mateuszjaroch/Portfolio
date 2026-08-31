@@ -1,8 +1,8 @@
-# Portfolio
+# placeholder-site
 
 A temporary, interactive terminal-style portfolio page — a stand-in until
-[myWeb](https://github.com/mateuszjaroch/myWeb), a Go static site
-generator, is ready to build the real thing.
+the Go static site generator (see `../README.md`) is ready to build the
+real thing.
 
 Pure HTML/CSS/JS, no build step, no dependencies.
 
@@ -29,6 +29,10 @@ Pure HTML/CSS/JS, no build step, no dependencies.
   currently not on the desktop — re-add its entry to the `APPS` array
   to bring it back.
 
+Two earlier animated-intro iterations (matrix-rain letter lock-in, and
+a rotating Lambert-shaded word) are kept in `../placeholder-site-versions/`
+in case you want to revisit them.
+
 ## Run locally
 
 Any static file server works, e.g.:
@@ -43,16 +47,10 @@ Then open the printed URL.
 
 ## Deploy to GitHub Pages
 
-Repo name determines the URL:
-
-- **Current setup (`Portfolio`)**: enable Pages in Settings → Pages →
-  deploy from the default branch. Site will be served at
-  `https://mateuszjaroch.github.io/Portfolio/`.
-- **Root-domain alternative**: rename the repo to
-  `mateuszjaroch.github.io` (Settings → General → Repository name),
-  then enable Pages the same way. Site will be served at
-  `https://mateuszjaroch.github.io/` directly.
-
+To serve at the root of `https://<username>.github.io`, push the
+contents of this folder as the root of a repo named exactly
+`<username>.github.io`, then enable Pages for that repo (Settings →
+Pages → deploy from the default branch).
 
 ## Commands
 
