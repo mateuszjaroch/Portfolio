@@ -130,9 +130,9 @@
   }
 
   const APPS = [
-    { id: "about", title: "About Me", icon: "aboutme.png", render: renderAbout },
-    { id: "projects", title: "Projects", icon: "projects.png", render: renderProjects },
-    { id: "contact", title: "Contact", icon: "contact.png", render: renderContact },
+    { id: "about", title: "About Me", icon: "assets/img/aboutme.png", render: renderAbout },
+    { id: "projects", title: "Projects", icon: "assets/img/projects.png", render: renderProjects },
+    { id: "contact", title: "Contact", icon: "assets/img/contact.png", render: renderContact },
     { id: "terminal", title: "Terminal", iconClass: "icon-terminal", glyph: ">_", returnToCli: true },
   ];
 

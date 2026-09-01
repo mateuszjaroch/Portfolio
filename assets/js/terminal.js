@@ -86,9 +86,9 @@ const commands = {
     async run() {
       printLines([
         "Available commands:",
-        "  help               show this help message",
-        "  whoami             who I am",
-        "  ls                 list projects in progress",
+        "  help, man          show this help message",
+        "  whoami, about      who I am",
+        "  ls, projects       list projects in progress",
         "  contact            how to reach me",
         "  locate <ip>        geolocate an IPv4 address",
         "  apt install gui    for recruiters who'd rather click than type",
