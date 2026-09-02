@@ -59,13 +59,13 @@ function printLines(lines, className) {
   lines.forEach((line) => printLine(line, className));
 }
 
-function printLinkLine(label, url) {
+function printLinkLine(label, url, display) {
   const div = document.createElement("div");
   div.className = "line";
   div.appendChild(document.createTextNode(`${label}: `));
   const a = document.createElement("a");
   a.href = url;
-  a.textContent = url;
+  a.textContent = display || url;
   a.target = "_blank";
   a.rel = "noopener noreferrer";
   div.appendChild(a);
@@ -86,9 +86,9 @@ const commands = {
     async run() {
       printLines([
         "Available commands:",
-        "  help, man          show this help message",
-        "  whoami, about      who I am",
-        "  ls, projects       list projects in progress",
+        "  help               show this help message",
+        "  whoami             who I am",
+        "  ls                 list projects in progress",
         "  contact            how to reach me",
         "  locate <ip>        geolocate an IPv4 address",
         "  apt install gui    for recruiters who'd rather click than type",
@@ -156,9 +156,9 @@ const commands = {
     description: "how to reach me",
     async run() {
       printLine("Reach me at:");
-      printLinkLine("GitHub", "https://github.com/mateuszjaroch");
-      printLinkLine("LinkedIn", "https://pl.linkedin.com/in/mateusz-jaroch-2ba500353");
-      printLinkLine("Email", "mailto:mateusz.jaroch21@gmail.com");
+      printLinkLine("GitHub", "https://github.com/mateuszjaroch", "github.com/mateuszjaroch");
+      printLinkLine("LinkedIn", "https://pl.linkedin.com/in/mateusz-jaroch-2ba500353", "linkedin.com/in/mateuszjaroch");
+      printLinkLine("Email", "mailto:mateusz.jaroch21@gmail.com", "mateusz.jaroch21@gmail.com");
     },
   },
 
